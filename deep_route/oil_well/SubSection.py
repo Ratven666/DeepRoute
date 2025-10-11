@@ -10,7 +10,8 @@ class SubSection:
         self.measure = measure
         self.parent = section
         self.number = measure.measure_number
-        self.magnetic_azimuth, self.zenith = self._calk_directions()
+        self.magnetic_azimuth, self.zenith, self.tool_face = self._calk_directions()
+        self.magnetic_dip = self._magnetic_dip()
         self.length = measure.length
         self.azimuth = None
         self.dx, self.dy, self.dz = None, None, None
@@ -29,15 +30,18 @@ class SubSection:
         t_3 = self.measure.g_z * (self.measure.g_x * self.measure.b_x + self.measure.g_y * self.measure.b_y)
         magnetic_azimuth = (math.atan2(t_1, (t_2 - t_3)) + math.tau) % math.tau
         zenith = math.acos(self.measure.g_z / self.measure.g_t)
-        return magnetic_azimuth, zenith
+        tool_face = (math.atan2(-self.measure.g_x, -self.measure.g_y) + math.tau) % math.tau
+        return magnetic_azimuth, zenith, tool_face
+
+    def _magnetic_dip(self):
+        x = self.measure.b_x * self.measure.g_x
+        y = self.measure.b_y * self.measure.g_y
+        z = self.measure.b_z * self.measure.g_z
+        t = self.measure.g_t * self.measure.b_t
+        magnetic_dip = math.asin((x + y + z) / t)
+        return magnetic_dip
 
     def _calk_coordinate_increments(self):
-        # next_subsection = self.parent.get_subsection_by_number(self.number + 1)
-        # next_azimuth, next_zenith = (next_subsection.azimuth, next_subsection.zenith) \
-        #     if next_subsection \
-        #     else (self.azimuth,  self.zenith)
-        # avr_zenith = (self.zenith + next_zenith) / 2
-        # avr_azimuth = (self.azimuth + next_azimuth) / 2
         previous_subsection = self.parent.get_subsection_by_number(self.number - 1)
         if previous_subsection is None:
             previous_azimuth = self.azimuth
@@ -64,6 +68,9 @@ class SubSection:
                           )
         return start_point, end_point
 
+    @property
+    def dip_ref(self):
+        return self.parent.dip_ref
 
     def __str__(self):
         return (f"{self.__class__.__name__} {self.number} [M={math.degrees(self.magnetic_azimuth):.4f},"

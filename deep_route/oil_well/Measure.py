@@ -14,6 +14,7 @@ class Measure:
         self.g_x, self.g_y, self.g_z = g_x, g_y, g_z
         self.b_x, self.b_y, self.b_z = b_x, b_y, b_z
         self.g_t = (self.g_x**2 + self.g_y**2 + self.g_z**2) ** 0.5
+        self.b_t = (self.b_x**2 + self.b_y**2 + self.b_z**2) ** 0.5
 
     def __str__(self):
         return (f"{self.__class__.__name__} [m_n={self.measure_number}, sec_n={self.sec_number}, "

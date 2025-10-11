@@ -8,7 +8,6 @@ class MSATTest(AccelerometerTestABC):
     def __init__(self, oil_well, theoretical_gravity=1.):
         super().__init__(oil_well)
         self.theoretical_gravity = theoretical_gravity
-        # self.accel_corrections = {}
 
     def start_section_test(self, section):
         a = self._calk_a_matrix(section=section)
@@ -33,7 +32,7 @@ class MSATTest(AccelerometerTestABC):
         for subsection in section:
             (derivative_abx, derivative_aby, derivative_abz,
              derivative_asx, derivative_asy, derivative_asz,
-             derivative_gt) = self.get_accel_derivatives(subsection.measure)
+             derivative_gt) = self.get_derivatives(subsection)
             a.append([derivative_abx, derivative_aby, derivative_abz,
                       derivative_asx, derivative_asy])
         return np.array(a)

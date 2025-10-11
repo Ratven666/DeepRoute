@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 from deep_route.oil_well.Measure import Measure
 from deep_route.oil_well.Section import Section
+from deep_route.oil_well.SubSection import SubSection
 from deep_route.tests.TestABC import TestABC
 
 
@@ -12,7 +13,8 @@ class AccelerometerTestABC(TestABC):
         pass
 
     @staticmethod
-    def get_accel_derivatives(measure: Measure):
+    def get_derivatives(sub_section: SubSection):
+        measure = sub_section.measure
         derivative_abx = measure.g_x / measure.g_t
         derivative_aby = measure.g_y / measure.g_t
         derivative_abz = measure.g_z / measure.g_t

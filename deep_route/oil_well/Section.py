@@ -28,6 +28,9 @@ class Section:
         for subsection in self.subsections.values():
             subsection.calculate_subsection()
 
+    @property
+    def dip_ref(self):
+        return self.parent.dip_ref
 
     def __str__(self):
         return f"{self.__class__.__name__} {self.section_number} len={len(self.subsections)}"

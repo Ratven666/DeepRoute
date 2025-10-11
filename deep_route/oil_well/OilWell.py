@@ -11,10 +11,14 @@ class OilWell:
                  latitude,
                  longitude,
                  center_longitude,
+                 m_delta,
+                 dip_ref,
                  start_point=Point(x=0, y=0),
                  ):
         self.latitude = latitude
         self.longitude = longitude
+        self.m_delta = m_delta
+        self.dip_ref = dip_ref
         self.center_longitude = center_longitude
         self.start_point = start_point
         self.sections = []
@@ -38,9 +42,8 @@ class OilWell:
         return None
 
     def _calk_magnetic_corrections(self):
-        m_delta = 23.06                           #TODO исправить!
         m_gamma = (self.longitude - self.center_longitude) * math.sin(math.radians(self.latitude))
-        return m_delta, m_gamma
+        return self.m_delta, m_gamma
 
     def calculate_trace(self):
         for section in self.sections:
