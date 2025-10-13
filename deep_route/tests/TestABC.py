@@ -13,7 +13,7 @@ class TestABC(ABC):
         total_result = {}
         for section in self.oil_well.sections:
             result_data = self.start_section_test(section)
-            total_result[section.section_number] = result_data
+            total_result[int(section.section_number)] = result_data
         return total_result
 
     @abstractmethod

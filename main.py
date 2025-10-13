@@ -14,10 +14,10 @@ oil_well = OilWell(latitude=68.527570255,
                    dip_ref=82.78,
                    start_point=base_point,
                    )
-oil_well.import_oil_well_file(file_path="src/raw_data.csv")
+oil_well.import_oil_well_file(file_path="src/raw_data.csv") 
 oil_well.calculate_trace()
 
-# oil_well.print_data()
+oil_well.print_data()
 
 # print(base_point)
 
@@ -32,12 +32,12 @@ oil_well.calculate_trace()
 #     df = pd.DataFrame(data["correlation_matrix"])
 #     print(df)
 
-msmt_test = MSMTTest(oil_well, theoretical_b_total=59923)
-result = msmt_test.start_test()
-print(result)
-
-for v in result[2]["mses_dict"]["v"]:
-    print(v)
+# msmt_test = MSMTTest(oil_well, theoretical_b_total=59923)
+# result = msmt_test.start_test()
+# print(result)
+#
+# for v in result[2]["mses_dict"]["v"]:
+#     print(v)
 
 # for n, data in result.items():
 #     print(n)

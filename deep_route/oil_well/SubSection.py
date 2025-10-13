@@ -12,21 +12,24 @@ class SubSection:
         self.number = measure.measure_number
         self.magnetic_azimuth, self.zenith, self.tool_face = self._calk_directions()
         self.magnetic_dip = self._magnetic_dip()
-        self.length = measure.length
+        self.length = self.measure.length
         self.azimuth = None
         self.dx, self.dy, self.dz = None, None, None
         self.start_point, self.end_point = None, None
 
-    def calculate_azimuth(self,  m_delta, m_gamma):
+    def calculate_azimuth(self, m_delta, m_gamma):
         self.azimuth = self.magnetic_azimuth + math.radians(m_delta - m_gamma)
 
     def calculate_subsection(self):
+        self.magnetic_azimuth, self.zenith, self.tool_face = self._calk_directions()
+        self.magnetic_dip = self._magnetic_dip()
+        self.length = self.measure.length
         self.dx, self.dy, self.dz = self._calk_coordinate_increments()
         self.start_point, self.end_point = self._calk_borders_points()
 
     def _calk_directions(self):
         t_1 = self.measure.g_t * (self.measure.b_y * self.measure.g_x - self.measure.b_x * self.measure.g_y)
-        t_2 = self.measure.b_z * (self.measure.g_x ** 2 + self.measure.g_y **2)
+        t_2 = self.measure.b_z * (self.measure.g_x ** 2 + self.measure.g_y ** 2)
         t_3 = self.measure.g_z * (self.measure.g_x * self.measure.b_x + self.measure.g_y * self.measure.b_y)
         magnetic_azimuth = (math.atan2(t_1, (t_2 - t_3)) + math.tau) % math.tau
         zenith = math.acos(self.measure.g_z / self.measure.g_t)

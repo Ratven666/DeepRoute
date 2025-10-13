@@ -29,9 +29,7 @@ class OilWell:
     def import_oil_well_file(self, file_path, parser=OilWellParserFormTxt):
         parser = parser(file_path)
         parser.parse(oil_well=self)
-        m_delta, m_gamma = self._calk_magnetic_corrections()
-        for section in self.sections:
-            section.calk_real_azimuth(m_delta, m_gamma)
+        self._calk_real_azimuths()
         return self
 
     def get_subsection_by_number(self, number):
@@ -45,7 +43,13 @@ class OilWell:
         m_gamma = (self.longitude - self.center_longitude) * math.sin(math.radians(self.latitude))
         return self.m_delta, m_gamma
 
+    def _calk_real_azimuths(self):
+        m_delta, m_gamma = self._calk_magnetic_corrections()
+        for section in self.sections:
+            section.calk_real_azimuth(m_delta, m_gamma)
+
     def calculate_trace(self):
+        self._calk_real_azimuths()
         for section in self.sections:
             section.calculate_trace()
 
