@@ -25,8 +25,10 @@ class Section:
             subsection.calculate_azimuth(m_delta, m_gamma)
 
     def calculate_trace(self):
+        m_delta = self.parent.m_delta
+        m_gamma = self.parent.m_gamma
         for subsection in self.subsections.values():
-            subsection.calculate_subsection()
+            subsection.calculate_subsection(m_delta=m_delta, m_gamma=m_gamma)
 
     @property
     def dip_ref(self):
@@ -40,3 +42,12 @@ class Section:
 
     def __iter__(self):
         return iter(self.subsections.values())
+
+    def __len__(self):
+        return len(self.subsections)
+
+    def __hash__(self):
+        return hash(self.section_number)
+
+    def __eq__(self, other):
+        return self.section_number == other.section_number

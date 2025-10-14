@@ -1,6 +1,7 @@
 import pandas as pd
 
 from deep_route.base_geometry.Point import Point
+from deep_route.correction_models.BaseMSACorrectionModel import BaseMSACorrectionModel
 from deep_route.oil_well.OilWell import OilWell
 from deep_route.tests.accelerometer.multi_station_accelerometer_test.MSATTest import MSATTest
 from deep_route.tests.magnetometer.multi_station_magnetoneter_test.MSMTTest import MSMTTest
@@ -17,11 +18,15 @@ oil_well = OilWell(latitude=68.527570255,
 oil_well.import_oil_well_file(file_path="src/raw_data.csv") 
 oil_well.calculate_trace()
 
-oil_well.print_data()
+# oil_well.print_data()
 
+ow = oil_well.calculate_correction(correction_model=BaseMSACorrectionModel, theoretical_b_total=59923)
+
+# ow.print_data()
 # print(base_point)
 
-# oil_well.plot()
+# fig_ax = oil_well.plot(is_show=False)
+# ow.plot(fig_ax=fig_ax)
 
 # msat_test = MSATTest(oil_well, theoretical_gravity=1.001878)
 # result = msat_test.start_test()

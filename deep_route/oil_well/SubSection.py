@@ -20,12 +20,13 @@ class SubSection:
     def calculate_azimuth(self, m_delta, m_gamma):
         self.azimuth = self.magnetic_azimuth + math.radians(m_delta - m_gamma)
 
-    def calculate_subsection(self):
+    def calculate_subsection(self, m_delta, m_gamma):
         self.magnetic_azimuth, self.zenith, self.tool_face = self._calk_directions()
         self.magnetic_dip = self._magnetic_dip()
         self.length = self.measure.length
         self.dx, self.dy, self.dz = self._calk_coordinate_increments()
         self.start_point, self.end_point = self._calk_borders_points()
+        self.azimuth = self.magnetic_azimuth + math.radians(m_delta - m_gamma)
 
     def _calk_directions(self):
         t_1 = self.measure.g_t * (self.measure.b_y * self.measure.g_x - self.measure.b_x * self.measure.g_y)
@@ -76,9 +77,13 @@ class SubSection:
         return self.parent.dip_ref
 
     def __str__(self):
-        return (f"{self.__class__.__name__} {self.number} [M={math.degrees(self.magnetic_azimuth):.4f},"
+        return (f"{self.__class__.__name__} {self.number}\t[M={math.degrees(self.magnetic_azimuth):.4f},"
                 f"A={math.degrees(self.azimuth):.4f}, "
                 f"Z={math.degrees(self.zenith):.4f}, "
                 f"S={self.length:.4f}, "
+                f"Dip={math.degrees(self.magnetic_dip):.4f}, "
                 f"dx={self.dx:.4f}, dy={self.dy:.4f}, dz={self.dz:.4f}, "
                 f"points=[{repr(self.start_point)}-{repr(self.end_point)}]]")
+
+    def __repr__(self):
+        return f"{self.__class__.__name__} {self.number}\t[points=[{repr(self.start_point)}-{repr(self.end_point)}]]"

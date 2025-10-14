@@ -1,6 +1,7 @@
 import math
 
 from deep_route.base_geometry.Point import Point
+from deep_route.correction_models.CorrectionModelABC import CorrectionModelABC
 from deep_route.oil_well.parsers.OilWellParserFormTxt import OilWellParserFormTxt
 from deep_route.oil_well.plotters.OilWellPlotterMPL import OilWellPlotterMPL
 
@@ -17,9 +18,10 @@ class OilWell:
                  ):
         self.latitude = latitude
         self.longitude = longitude
-        self.m_delta = m_delta
         self.dip_ref = dip_ref
         self.center_longitude = center_longitude
+        self.m_delta = m_delta
+        self.m_gamma = self._calk_magnetic_corrections()
         self.start_point = start_point
         self.sections = []
 
@@ -41,22 +43,27 @@ class OilWell:
 
     def _calk_magnetic_corrections(self):
         m_gamma = (self.longitude - self.center_longitude) * math.sin(math.radians(self.latitude))
-        return self.m_delta, m_gamma
+        return m_gamma
 
     def _calk_real_azimuths(self):
-        m_delta, m_gamma = self._calk_magnetic_corrections()
         for section in self.sections:
-            section.calk_real_azimuth(m_delta, m_gamma)
+            section.calk_real_azimuth(self.m_delta, self.m_gamma)
 
     def calculate_trace(self):
         self._calk_real_azimuths()
         for section in self.sections:
             section.calculate_trace()
 
-    def plot(self, *args, plotter=OilWellPlotterMPL, **kwargs):
-        plotter = plotter(*args, **kwargs)
+    def plot(self, *args, plotter=OilWellPlotterMPL, is_show=True, **kwargs):
+        plotter = plotter(*args, is_show=is_show, **kwargs)
         fig_ax = plotter.plot(oil_well=self)
         return fig_ax
+
+    def calculate_correction(self, *args, correction_model,
+                             inplace=False, **kwargs):
+        correction_model = correction_model(self, *args, **kwargs)
+        oil_well = correction_model.calculate_correction(inplace=inplace)
+        return oil_well
 
     def __str__(self):
         return f"{self.__class__.__name__} [start_point={self.start_point}, sections={self.sections}]"
