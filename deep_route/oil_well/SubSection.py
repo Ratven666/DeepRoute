@@ -87,3 +87,9 @@ class SubSection:
 
     def __repr__(self):
         return f"{self.__class__.__name__} {self.number}\t[points=[{repr(self.start_point)}-{repr(self.end_point)}]]"
+
+    def __hash__(self):
+        return hash(self.number)
+
+    def __eq__(self, other):
+        return self.number == other.number
