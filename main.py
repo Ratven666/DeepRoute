@@ -19,38 +19,38 @@ oil_well.import_oil_well_file(file_path="src/raw_data.csv")
 oil_well.calculate_trace()
 
 # oil_well.print_data()
-
+#
 ow = oil_well.calculate_correction(correction_model=BaseMSACorrectionModel,
                                    theoretical_b_total=59923,
                                    bad_subsection_percent=0.1,
-                                   # los_func_type="lsm",
-                                   los_func_type="min_abs",
+                                   los_func_type="lsm",
+                                   # los_func_type="min_abs",
                                    )
-
-# ow.print_data()
-# print(base_point)
 #
-fig_ax = oil_well.plot(is_show=False)
-ow.plot(fig_ax=fig_ax)
+# # ow.print_data()
+# # print(base_point)
+# #
+fig_ax = oil_well.plot(is_show=True)
+# ow.plot(fig_ax=fig_ax)
 
-# msat_test = MSATTest(oil_well, theoretical_gravity=1.001878)
-# result = msat_test.start_test()
-# print(result)
+msat_test = MSATTest(oil_well, theoretical_gravity=1.001878)
+result = msat_test.start_test()
+print(result)
+
+for n, data in result.items():
+    print(n)
+    df = pd.DataFrame(data["correlation_matrix"])
+    print(df)
 #
-# for n, data in result.items():
-#     print(n)
-#     df = pd.DataFrame(data["correlation_matrix"])
-#     print(df)
+msmt_test = MSMTTest(oil_well, theoretical_b_total=59923)
+result = msmt_test.start_test()
+print(result)
 
-# msmt_test = MSMTTest(oil_well, theoretical_b_total=59923)
-# result = msmt_test.start_test()
-# print(result)
+# # for v in result[2]["mses_dict"]["v"]:
+# #     print(v)
 #
-# for v in result[2]["mses_dict"]["v"]:
-#     print(v)
-
-# for n, data in result.items():
-#     print(n)
-#     df = pd.DataFrame(data["correlation_matrix"])
-#     print(df)
+for n, data in result.items():
+    print(n)
+    df = pd.DataFrame(data["correlation_matrix"])
+    print(df)
 
