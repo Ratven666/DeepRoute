@@ -4,13 +4,20 @@ import numpy as np
 
 from deep_route.oil_well.Section import Section
 from deep_route.tests.magnetometer.MagnetometerTestABC import MagnetometerTestABC
+from deep_route.tests.magnetometer.earth_model_magnet_errors import BGGM_EARTH_MODEL_MAGNET_ERRORS
+from deep_route.tests.magnetometer.iscwsa_magnitometrer_errors import ISCWSA_STANDART_MAGNETOMETER_ERRORS
 
 
 class MSMTTest(MagnetometerTestABC):
 
-    def __init__(self, oil_well, theoretical_b_total):
+    def __init__(self, oil_well, theoretical_b_total, k=3,
+                 magnetometer_error_model=ISCWSA_STANDART_MAGNETOMETER_ERRORS,
+                 earth_model_magnet_errors=BGGM_EARTH_MODEL_MAGNET_ERRORS):
         super().__init__(oil_well)
         self.theoretical_b_total = theoretical_b_total
+        self.k = k
+        self.magnetometer_error_model = magnetometer_error_model
+        self.earth_model_magnet_errors = earth_model_magnet_errors
 
     def start_section_test(self, section):
         a = self._calk_a_matrix(section=section)
@@ -26,11 +33,79 @@ class MSMTTest(MagnetometerTestABC):
                                     }
         mses_dict = self._calk_magnetometer_mses(a, l, x)
         corr_matrix = self._calk_correlation_matrix(a)
+        test_result = self._calk_test_result(mses_dict)
+        emfst = self._earth_magnet_field_subsections_test(section=section)
         result_data = {"magnetometer_corrections": magnetometer_corrections,
                        "mses_dict": mses_dict,
                        "correlation_matrix": corr_matrix,
+                       "test_result": test_result,
+                       "earth_magnet_field_subsections_test": emfst,
                        }
         return result_data
+
+    def _earth_magnet_field_subsections_test(self, section):
+        result_data = {}
+        mag_em = self.magnetometer_error_model
+        em = self.earth_model_magnet_errors
+        for subsection in section:
+            derivatives = self.get_derivatives(subsection)
+            d_mbx = derivatives["db_mbx"]
+            d_mby = derivatives["db_mby"]
+            d_mbz = derivatives["db_mbz"]
+            d_msx = derivatives["db_msx"]
+            d_msy = derivatives["db_msy"]
+            d_msz = derivatives["db_msz"]
+            d_mfi = derivatives["dbd_mfi"]
+            d_mdi = derivatives["dbd_mdi"]
+
+            mse_db = ((d_mbx ** 2 * mag_em["s_mbx"] ** 2) +
+                      (d_mby ** 2 * mag_em["s_mby"] ** 2) +
+                      (d_mbz ** 2 * mag_em["s_mbz"] ** 2) +
+                      (d_msx ** 2 * mag_em["s_msx"] ** 2) +
+                      (d_msy ** 2 * mag_em["s_msy"] ** 2) +
+                      (d_msz ** 2 * mag_em["s_msz"] ** 2) +
+                      (d_mfi ** 2 * em["s_mfi"] ** 2)) ** 0.5
+
+            mse_dtheta = ((d_mbx ** 2 * mag_em["s_mbx"] ** 2) +  #TODO ПРОВЕРИТЬ!!!!
+                          (d_mby ** 2 * mag_em["s_mby"] ** 2) +
+                          (d_mbz ** 2 * mag_em["s_mbz"] ** 2) +
+                          (d_msx ** 2 * mag_em["s_msx"] ** 2) +
+                          (d_msy ** 2 * mag_em["s_msy"] ** 2) +
+                          (d_msz ** 2 * mag_em["s_msz"] ** 2) +
+                          (d_mdi ** 2 * math.radians(em["s_mdi"]) ** 2)) ** 0.5
+
+            delta_b = subsection.measure.b_t - self.theoretical_b_total
+            delta_theta = subsection.magnetic_dip - math.radians(subsection.dip_ref)
+            b_test = {"mse_dg": mse_db,
+                      "delta_b": delta_b,
+                      "is_correct": -(self.k * mse_db) <= delta_b <= (self.k * mse_db),
+                      }
+            dip_test = {"mse_dtheta": mse_dtheta,
+                        "delta_b": delta_theta,
+                        "is_correct": -(self.k * mse_dtheta) <= delta_theta <= (self.k * mse_dtheta),
+                        }
+            result_data[subsection] = {"b_test": b_test,
+                                       "dip_test": dip_test,
+                                       }
+        return result_data
+
+    def _calk_test_result(self, mses_dict):
+        mag_em = self.magnetometer_error_model
+
+        mbx_test = abs(mses_dict["mse_mbx"]) <= self.k * mag_em["s_mbx"]
+        mby_test = abs(mses_dict["mse_mby"]) <= self.k * mag_em["s_mby"]
+        mbz_test = abs(mses_dict["mse_mbz"]) <= self.k * mag_em["s_mbz"]
+        msx_test = abs(mses_dict["mse_msx"]) <= self.k * mag_em["s_msx"]
+        msy_test = abs(mses_dict["mse_msy"]) <= self.k * mag_em["s_msy"]
+        msz_test = abs(mses_dict["mse_msz"]) <= self.k * mag_em["s_msz"]
+        test_result = {"mbx_test": mbx_test,
+                       "mby_test": mby_test,
+                       "mbz_test": mbz_test,
+                       "msx_test": msx_test,
+                       "msy_test": msy_test,
+                       "msz_test": msz_test,
+                       }
+        return test_result
 
     def _calk_a_matrix(self, section):
         a = []
@@ -87,3 +162,30 @@ class MSMTTest(MagnetometerTestABC):
             for j in range(n):
                 corr_matrix[i, j] = q[i, j] / np.sqrt(q[i, i] * q[j, j])
         return corr_matrix
+
+
+if __name__ == '__main__':
+    from deep_route.base_geometry.Point import Point
+    from deep_route.oil_well.OilWell import OilWell
+
+    base_point = Point(x=457761.06, y=7602076.31, z=40.30)
+
+    oil_well = OilWell(latitude=68.527570255,
+                       longitude=79.964853136,
+                       center_longitude=81,
+                       m_delta=23.06,
+                       dip_ref=82.78,
+                       start_point=base_point,
+                       )
+    oil_well.import_oil_well_file(file_path="../../../../src/raw_data.csv")
+    oil_well.calculate_trace()
+
+    get_test = MSMTTest(oil_well, theoretical_b_total=59923)
+    result = get_test.start_test()
+    print(result)
+
+    for section, result_data in result.items():
+        print(section, "\n")
+        for type_, data in result_data.items():
+            print("\n", type_)
+            print(data, sep="\n")
