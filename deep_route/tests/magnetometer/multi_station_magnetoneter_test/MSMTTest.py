@@ -66,7 +66,7 @@ class MSMTTest(MagnetometerTestABC):
                       (d_msz ** 2 * mag_em["s_msz"] ** 2) +
                       (d_mfi ** 2 * em["s_mfi"] ** 2)) ** 0.5
 
-            mse_dtheta = ((d_mbx ** 2 * mag_em["s_mbx"] ** 2) +  #TODO ПРОВЕРИТЬ!!!!
+            mse_dtheta = ((d_mbx ** 2 * mag_em["s_mbx"] ** 2) +
                           (d_mby ** 2 * mag_em["s_mby"] ** 2) +
                           (d_mbz ** 2 * mag_em["s_mbz"] ** 2) +
                           (d_msx ** 2 * mag_em["s_msx"] ** 2) +
@@ -75,7 +75,7 @@ class MSMTTest(MagnetometerTestABC):
                           (d_mdi ** 2 * math.radians(em["s_mdi"]) ** 2)) ** 0.5
 
             delta_b = subsection.measure.b_t - self.theoretical_b_total
-            delta_theta = subsection.magnetic_dip - math.radians(subsection.dip_ref)
+            delta_theta = self.theoretical_b_total * (subsection.magnetic_dip - math.radians(subsection.dip_ref))
             b_test = {"mse_dg": mse_db,
                       "delta_b": delta_b,
                       "is_correct": -(self.k * mse_db) <= delta_b <= (self.k * mse_db),
