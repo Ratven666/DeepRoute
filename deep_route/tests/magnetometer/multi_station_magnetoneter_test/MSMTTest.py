@@ -42,49 +42,80 @@ class MSMTTest(MagnetometerTestABC):
                        }
         return result_data
 
-    def _earth_magnet_field_subsections_test(self, section):
-        result_data = {}
+    def _calk_mse_db(self, subsection):
         mag_em = self.magnetometer_error_model
         em = self.earth_model_magnet_errors
-        for subsection in section:
-            derivatives = self.get_derivatives(subsection)
-            d_mbx = derivatives["db_mbx"]
-            d_mby = derivatives["db_mby"]
-            d_mbz = derivatives["db_mbz"]
-            d_msx = derivatives["db_msx"]
-            d_msy = derivatives["db_msy"]
-            d_msz = derivatives["db_msz"]
-            d_mfi = derivatives["dbd_mfi"]
-            d_mdi = derivatives["dbd_mdi"]
+        derivatives = self.get_derivatives(subsection)
+        d_mbx = derivatives["db_mbx"]
+        d_mby = derivatives["db_mby"]
+        d_mbz = derivatives["db_mbz"]
+        d_msx = derivatives["db_msx"]
+        d_msy = derivatives["db_msy"]
+        d_msz = derivatives["db_msz"]
+        d_mfi = derivatives["dbd_mfi"]
 
-            mse_db = ((d_mbx ** 2 * mag_em["s_mbx"] ** 2) +
-                      (d_mby ** 2 * mag_em["s_mby"] ** 2) +
-                      (d_mbz ** 2 * mag_em["s_mbz"] ** 2) +
-                      (d_msx ** 2 * mag_em["s_msx"] ** 2) +
-                      (d_msy ** 2 * mag_em["s_msy"] ** 2) +
-                      (d_msz ** 2 * mag_em["s_msz"] ** 2) +
-                      (d_mfi ** 2 * em["s_mfi"] ** 2)) ** 0.5
+        mse_db = ((d_mbx ** 2 * mag_em["s_mbx"] ** 2) +
+                  (d_mby ** 2 * mag_em["s_mby"] ** 2) +
+                  (d_mbz ** 2 * mag_em["s_mbz"] ** 2) +
+                  (d_msx ** 2 * mag_em["s_msx"] ** 2) +
+                  (d_msy ** 2 * mag_em["s_msy"] ** 2) +
+                  (d_msz ** 2 * mag_em["s_msz"] ** 2) +
+                  (d_mfi ** 2 * em["s_mfi"] ** 2)) ** 0.5
+        return mse_db
 
-            mse_dtheta = ((d_mbx ** 2 * mag_em["s_mbx"] ** 2) +
-                          (d_mby ** 2 * mag_em["s_mby"] ** 2) +
-                          (d_mbz ** 2 * mag_em["s_mbz"] ** 2) +
-                          (d_msx ** 2 * mag_em["s_msx"] ** 2) +
-                          (d_msy ** 2 * mag_em["s_msy"] ** 2) +
-                          (d_msz ** 2 * mag_em["s_msz"] ** 2) +
-                          (d_mdi ** 2 * math.radians(em["s_mdi"]) ** 2)) ** 0.5
+    def _calk_mse_dtheta(self, subsection):
+        mag_em = self.magnetometer_error_model
+        em = self.earth_model_magnet_errors
+        derivatives = self.get_derivatives(subsection)
+        dd_mbx = derivatives["dd_mbx"]
+        dd_mby = derivatives["dd_mby"]
+        dd_mbz = derivatives["dd_mbz"]
+        dd_msx = derivatives["dd_msx"]
+        dd_msy = derivatives["dd_msy"]
+        dd_msz = derivatives["dd_msz"]
+        dd_mdi = derivatives["dd_mdi"]
+
+        mse_dtheta = ((dd_mbx ** 2 * mag_em["s_mbx"] ** 2) +
+                      (dd_mby ** 2 * mag_em["s_mby"] ** 2) +
+                      (dd_mbz ** 2 * mag_em["s_mbz"] ** 2) +
+                      (dd_msx ** 2 * mag_em["s_msx"] ** 2) +
+                      (dd_msy ** 2 * mag_em["s_msy"] ** 2) +
+                      (dd_msz ** 2 * mag_em["s_msz"] ** 2) +
+                      (dd_mdi ** 2 * math.radians(em["s_mdi"]) ** 2)) ** 0.5
+        return mse_dtheta
+
+    def _earth_magnet_field_subsections_test(self, section):
+        result_data = {}
+        v = self._calk_v_matrix(section)
+        v_db = v[::2]
+        v_d_dip = v[1::2]
+        for idx, subsection in enumerate(section):
+            mse_db = self._calk_mse_db(subsection=subsection)
+            mse_dtheta = self._calk_mse_dtheta(subsection=subsection)
 
             delta_b = subsection.measure.b_t - self.theoretical_b_total
-            delta_theta = self.theoretical_b_total * (subsection.magnetic_dip - math.radians(subsection.dip_ref))
-            b_test = {"mse_dg": mse_db,
-                      "delta_b": delta_b,
-                      "is_correct": -(self.k * mse_db) <= delta_b <= (self.k * mse_db),
-                      }
-            dip_test = {"mse_dtheta": mse_dtheta,
-                        "delta_b": delta_theta,
-                        "is_correct": -(self.k * mse_dtheta) <= delta_theta <= (self.k * mse_dtheta),
-                        }
-            result_data[subsection] = {"b_test": b_test,
-                                       "dip_test": dip_test,
+            delta_theta = subsection.magnetic_dip - math.radians(subsection.dip_ref)
+            tfdt_db = {"mse_db": mse_db,
+                       "delta_b": delta_b,
+                       "is_correct": -(self.k * mse_db) <= delta_b <= (self.k * mse_db),
+                       }
+            tfdt_d_dip = {"mse_dtheta": mse_dtheta,
+                          "delta_b": delta_theta,
+                          "is_correct": -(self.k * mse_dtheta) <= delta_theta <= (self.k * mse_dtheta),
+                          }
+            msmt_db = {"mse_db": mse_db,
+                       "delta_db_v": float(v_db[idx]),
+                       "is_correct": abs(float(v_db[idx])) <= self.k * mse_db,
+                       }
+            msmt_d_dip = {"mse_dtheta": self.theoretical_b_total * mse_dtheta,
+                          "delta_d_dip_v": float(v_d_dip[idx]),
+                          "is_correct": abs(float(v_d_dip[idx])) <= self.k * (self.theoretical_b_total * mse_dtheta),
+                          }
+
+            result_data[subsection] = {"TFDT_db": tfdt_db,
+                                       "TFDT_d_dip": tfdt_d_dip,
+                                       "MSMT_DB": msmt_db,
+                                       "MSMT_D_DIP": msmt_d_dip,
                                        }
         return result_data
 
@@ -132,10 +163,16 @@ class MSMTTest(MagnetometerTestABC):
         x = q @ a.T @ l
         return x
 
+    def _calk_v_matrix(self, section):
+        a = self._calk_a_matrix(section)
+        l = self._calk_l_matrix(section)
+        x = self._calk_x_matrix(a, l)
+        v = l - a @ x
+        return v
+
     @staticmethod
     def _calk_magnetometer_mses(a, l, x):
         v = l - a @ x
-        print(v[::2])
         vv = v.T @ v
         mu = (vv[0][0] / (len(v) - len(x))) ** 0.5
         q = np.linalg.inv(a.T @ a)
