@@ -1,6 +1,7 @@
 import numpy as np
 
 from deep_route.tests.accelerometer.AccelerometerTestABC import AccelerometerTestABC
+from deep_route.tests.accelerometer.gravity_error_test.GETTest import GETTest
 from deep_route.tests.accelerometer.iscwsa_gravity_errors import ISCWSA_GRAVITY_ERRORS
 
 
@@ -24,25 +25,40 @@ class MSATTest(AccelerometerTestABC):
                              }
         mses_dict = self._calk_accel_mses(a, l, x)
         corr_matrix = self._calk_correlation_matrix(a)
-        test_result = self._calk_test_result(mses_dict)
+        test_result = self._calk_test_result(x)
+        subsection_test = self._calk_subsection_test(section)
         result_data = {"accel_corrections": accel_corrections,
                        "mses_dict": mses_dict,
                        "correlation_matrix": corr_matrix,
                        "test_result": test_result,
+                       "subsection_test": subsection_test,
                        }
         return result_data
 
-    def _calk_test_result(self, mses_dict):
-        abx_test = abs(mses_dict["mse_abx"]) <= self.k * self.error_model["s_abx"]
-        aby_test = abs(mses_dict["mse_aby"]) <= self.k * self.error_model["s_aby"]
-        abz_test = abs(mses_dict["mse_abz"]) <= self.k * self.error_model["s_abz"]
-        asx_test = abs(mses_dict["mse_asx"]) <= self.k * self.error_model["s_asx"]
-        asy_test = abs(mses_dict["mse_asy"]) <= self.k * self.error_model["s_asy"]
-        test_result = {"abx_test": abx_test,
-                       "aby_test": aby_test,
-                       "abz_test": abz_test,
-                       "asx_test": asx_test,
-                       "asy_test": asy_test,
+    def _calk_subsection_test(self, section):
+        result_data = {}
+        get_test = GETTest(oil_well=self.oil_well,
+                           theoretical_gravity=self.theoretical_gravity,
+                           k=self.k,
+                           error_model=self.error_model)
+        v = self._calk_v_matrix(section=section)
+        for idx, subsection in enumerate(section):
+            mse_dg = get_test.get_mse_dg(subsection)
+            test_result = abs(v[idx]) <= self.k * mse_dg
+            result_data[subsection] = {"v": float(v[idx][0]), "mse_dg": mse_dg, "result": bool(test_result[0])}
+        return result_data
+
+    def _calk_test_result(self, x):
+        abx_test = abs(x[0]) <= self.k * self.error_model["s_abx"]
+        aby_test = abs(x[1]) <= self.k * self.error_model["s_aby"]
+        abz_test = abs(x[2]) <= self.k * self.error_model["s_abz"]
+        asx_test = abs(x[3]) <= self.k * self.error_model["s_asx"]
+        asy_test = abs(x[4]) <= self.k * self.error_model["s_asy"]
+        test_result = {"abx_test": bool(abx_test[0]),
+                       "aby_test": bool(aby_test[0]),
+                       "abz_test": bool(abz_test[0]),
+                       "asx_test": bool(asx_test[0]),
+                       "asy_test": bool(asy_test[0]),
                        }
         return test_result
 
@@ -68,6 +84,13 @@ class MSATTest(AccelerometerTestABC):
         q = np.linalg.inv(n)
         x = q @ a.T @ l
         return x
+
+    def _calk_v_matrix(self, section):
+        a = self._calk_a_matrix(section)
+        l = self._calk_l_matrix(section)
+        x = self._calk_x_matrix(a, l)
+        v = l - a @ x
+        return v
 
     @staticmethod
     def _calk_accel_mses(a, l, x):

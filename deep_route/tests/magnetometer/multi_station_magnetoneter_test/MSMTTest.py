@@ -23,7 +23,6 @@ class MSMTTest(MagnetometerTestABC):
         a = self._calk_a_matrix(section=section)
         l = self._calk_l_matrix(section=section)
         x = self._calk_x_matrix(a, l)
-
         magnetometer_corrections = {"mbx": float(x[0][0]),
                                     "mby": float(x[1][0]),
                                     "mbz": float(x[2][0]),
@@ -33,7 +32,7 @@ class MSMTTest(MagnetometerTestABC):
                                     }
         mses_dict = self._calk_magnetometer_mses(a, l, x)
         corr_matrix = self._calk_correlation_matrix(a)
-        test_result = self._calk_test_result(mses_dict)
+        test_result = self._calk_test_result(x)
         emfst = self._earth_magnet_field_subsections_test(section=section)
         result_data = {"magnetometer_corrections": magnetometer_corrections,
                        "mses_dict": mses_dict,
@@ -89,21 +88,21 @@ class MSMTTest(MagnetometerTestABC):
                                        }
         return result_data
 
-    def _calk_test_result(self, mses_dict):
+    def _calk_test_result(self, x):
         mag_em = self.magnetometer_error_model
 
-        mbx_test = abs(mses_dict["mse_mbx"]) <= self.k * mag_em["s_mbx"]
-        mby_test = abs(mses_dict["mse_mby"]) <= self.k * mag_em["s_mby"]
-        mbz_test = abs(mses_dict["mse_mbz"]) <= self.k * mag_em["s_mbz"]
-        msx_test = abs(mses_dict["mse_msx"]) <= self.k * mag_em["s_msx"]
-        msy_test = abs(mses_dict["mse_msy"]) <= self.k * mag_em["s_msy"]
-        msz_test = abs(mses_dict["mse_msz"]) <= self.k * mag_em["s_msz"]
-        test_result = {"mbx_test": mbx_test,
-                       "mby_test": mby_test,
-                       "mbz_test": mbz_test,
-                       "msx_test": msx_test,
-                       "msy_test": msy_test,
-                       "msz_test": msz_test,
+        mbx_test = abs(x[0]) <= self.k * mag_em["s_mbx"]
+        mby_test = abs(x[1]) <= self.k * mag_em["s_mby"]
+        mbz_test = abs(x[2]) <= self.k * mag_em["s_mbz"]
+        msx_test = abs(x[3]) <= self.k * mag_em["s_msx"]
+        msy_test = abs(x[4]) <= self.k * mag_em["s_msy"]
+        msz_test = abs(x[5]) <= self.k * mag_em["s_msz"]
+        test_result = {"mbx_test": bool(mbx_test[0]),
+                       "mby_test": bool(mby_test[0]),
+                       "mbz_test": bool(mbz_test[0]),
+                       "msx_test": bool(msx_test[0]),
+                       "msy_test": bool(msy_test[0]),
+                       "msz_test": bool(msz_test[0]),
                        }
         return test_result
 
@@ -136,6 +135,7 @@ class MSMTTest(MagnetometerTestABC):
     @staticmethod
     def _calk_magnetometer_mses(a, l, x):
         v = l - a @ x
+        print(v[::2])
         vv = v.T @ v
         mu = (vv[0][0] / (len(v) - len(x))) ** 0.5
         q = np.linalg.inv(a.T @ a)
@@ -182,7 +182,7 @@ if __name__ == '__main__':
 
     get_test = MSMTTest(oil_well, theoretical_b_total=59923)
     result = get_test.start_test()
-    print(result)
+    # print(result)
 
     for section, result_data in result.items():
         print(section, "\n")

@@ -11,20 +11,25 @@ class GETTest(AccelerometerTestABC):
         self.error_model = error_model
         self.k = k
 
+    def get_mse_dg(self, subsection):
+        em = self.error_model
+        (derivative_abx, derivative_aby, derivative_abz,
+         derivative_asx, derivative_asy, derivative_asz,
+         derivative_gt) = self.get_derivatives(subsection)
+        mse_dg = ((derivative_abx ** 2 * em["s_abx"] ** 2) +
+                  (derivative_aby ** 2 * em["s_aby"] ** 2) +
+                  (derivative_abz ** 2 * em["s_abz"] ** 2) +
+                  (derivative_asx ** 2 * em["s_asx"] ** 2) +
+                  (derivative_asy ** 2 * em["s_asy"] ** 2) +
+                  (derivative_asz ** 2 * em["s_asz"] ** 2)) ** 0.5
+        return mse_dg
+
+
 
     def start_section_test(self, section):
         result_data = {"GET_test": []}
-        em = self.error_model
         for subsection in section:
-            (derivative_abx, derivative_aby, derivative_abz,
-            derivative_asx, derivative_asy, derivative_asz,
-            derivative_gt) = self.get_derivatives(subsection)
-            mse_dg = ((derivative_abx**2 * em["s_abx"]**2) +
-                      (derivative_aby**2 * em["s_aby"]**2) +
-                      (derivative_abz**2 * em["s_abz"]**2) +
-                      (derivative_asx**2 * em["s_asx"]**2) +
-                      (derivative_asy**2 * em["s_asy"]**2) +
-                      (derivative_asz**2 * em["s_asz"]**2)) ** 0.5
+            mse_dg = self.get_mse_dg(subsection)
             delta_g = subsection.measure.g_t - self.theoretical_gravity
             data = {"subsection": subsection,
                     "mse_dg": mse_dg,
