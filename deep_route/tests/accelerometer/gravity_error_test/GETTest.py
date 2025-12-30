@@ -5,14 +5,14 @@ from deep_route.tests.accelerometer.iscwsa_gravity_errors import ISCWSA_GRAVITY_
 
 class GETTest(AccelerometerTestABC):
 
-    def __init__(self, oil_well, theoretical_gravity=1., k=3, error_model=ISCWSA_GRAVITY_ERRORS):
+    def __init__(self, oil_well, theoretical_gravity=1., k=3, gravity_error_model=ISCWSA_GRAVITY_ERRORS):
         super().__init__(oil_well)
         self.theoretical_gravity = theoretical_gravity
-        self.error_model = error_model
+        self.gravity_error_model = gravity_error_model
         self.k = k
 
     def get_mse_dg(self, subsection):
-        em = self.error_model
+        em = self.gravity_error_model
         (derivative_abx, derivative_aby, derivative_abz,
          derivative_asx, derivative_asy, derivative_asz,
          derivative_gt) = self.get_derivatives(subsection)

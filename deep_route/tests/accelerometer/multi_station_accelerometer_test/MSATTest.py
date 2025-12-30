@@ -7,10 +7,10 @@ from deep_route.tests.accelerometer.iscwsa_gravity_errors import ISCWSA_GRAVITY_
 
 class MSATTest(AccelerometerTestABC):
 
-    def __init__(self, oil_well, theoretical_gravity=1., k=3, error_model=ISCWSA_GRAVITY_ERRORS):
+    def __init__(self, oil_well, theoretical_gravity=1., k=3, gravity_error_model=ISCWSA_GRAVITY_ERRORS):
         super().__init__(oil_well)
         self.theoretical_gravity = theoretical_gravity
-        self.error_model = error_model
+        self.gravity_error_model = gravity_error_model
         self.k = k
 
     def start_section_test(self, section):
@@ -40,7 +40,7 @@ class MSATTest(AccelerometerTestABC):
         get_test = GETTest(oil_well=self.oil_well,
                            theoretical_gravity=self.theoretical_gravity,
                            k=self.k,
-                           error_model=self.error_model)
+                           gravity_error_model=self.gravity_error_model)
         v = self._calk_v_matrix(section=section)
         for idx, subsection in enumerate(section):
             mse_dg = get_test.get_mse_dg(subsection)
@@ -49,11 +49,11 @@ class MSATTest(AccelerometerTestABC):
         return result_data
 
     def _calk_test_result(self, x):
-        abx_test = abs(x[0]) <= self.k * self.error_model["s_abx"]
-        aby_test = abs(x[1]) <= self.k * self.error_model["s_aby"]
-        abz_test = abs(x[2]) <= self.k * self.error_model["s_abz"]
-        asx_test = abs(x[3]) <= self.k * self.error_model["s_asx"]
-        asy_test = abs(x[4]) <= self.k * self.error_model["s_asy"]
+        abx_test = abs(x[0]) <= self.k * self.gravity_error_model["s_abx"]
+        aby_test = abs(x[1]) <= self.k * self.gravity_error_model["s_aby"]
+        abz_test = abs(x[2]) <= self.k * self.gravity_error_model["s_abz"]
+        asx_test = abs(x[3]) <= self.k * self.gravity_error_model["s_asx"]
+        asy_test = abs(x[4]) <= self.k * self.gravity_error_model["s_asy"]
         test_result = {"abx_test": bool(abx_test[0]),
                        "aby_test": bool(aby_test[0]),
                        "abz_test": bool(abz_test[0]),

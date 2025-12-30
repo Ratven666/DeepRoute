@@ -100,7 +100,7 @@ class MSMTTest(MagnetometerTestABC):
                        "is_correct": -(self.k * mse_db) <= delta_b <= (self.k * mse_db),
                        }
             tfdt_d_dip = {"mse_dtheta": mse_dtheta,
-                          "delta_b": delta_theta,
+                          "delta_theta": delta_theta,
                           "is_correct": -(self.k * mse_dtheta) <= delta_theta <= (self.k * mse_dtheta),
                           }
             msmt_db = {"mse_db": mse_db,
